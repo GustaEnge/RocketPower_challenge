@@ -17,3 +17,7 @@
 
 #### Obs: If you wanna just run, I prepared the executable file (..\RocketPower\dist)
 
+## Running:
+
+![](rocketPower_challenge.gif)
+
