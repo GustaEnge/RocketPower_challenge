@@ -4,42 +4,11 @@ from selenium.webdriver.support import expected_conditions as EC, wait
 from selenium import webdriver
 from pathlib import Path
 import time
-import os,sys,re,random,string
+import os,re
 import pytest
 from webdriver_manager.chrome import ChromeDriverManager
-
-class TestClass:
-    gone_ticket = ""
-    return_ticket = ""
-
-    def negative_test(self):
-        self.gone_ticket = "20B"
-        self.return_ticket = "60E"
-        obj.generateSeat(self.gone_ticket,self.return_ticket)
-        assert self.gone_ticket in obj.gone_seat
-        assert self.return_ticket in obj.return_seat
-        
-    def positive_test(self,obj):
-        self.gone_ticket = "25J"
-        self.return_ticket = "32E"
-        obj.generateSeat(self.gone_ticket,self.return_ticket)
-        assert self.gone_ticket in obj.go_seat
-        assert self.return_ticket in obj.re_seat
-        
-    def multiple_test(self,obj,num):
-        for i in range(num):
-            self.gone_ticket = self.generateSeat()
-            self.return_ticket = self.generateSeat()
-            while(self.gone_ticket == self.return_ticket):
-                self.return_ticket = self.generateSeat()
-            obj.generateSeat(self.gone_ticket,self.return_ticket)
-            assert self.gone_ticket in obj.go_seat
-            assert self.return_ticket in obj.re_seat                
-
-    def generateSeat(self):
-        number = random.randint(18,62)
-        letter =  random.choice([l for l in string.ascii_uppercase if l <= 'K'])
-        return str(number)+letter            
+from test_challenge import TestClass
+           
 class OpenWeb:
     go_seat = ""
     re_seat = ""
@@ -48,6 +17,9 @@ class OpenWeb:
         self.setup()
     
     def setup(self):
+        """
+        This is a method which sets the webdriver up
+        """
         url = "https://static.gordiansoftware.com/"
         options = webdriver.ChromeOptions()
         self.driver = webdriver.Chrome(ChromeDriverManager().install())
@@ -55,6 +27,10 @@ class OpenWeb:
         self.driver.get(url)
     
     def checkSeatValues(seat):
+        """
+        Check if the range of the input data is meeting the bondary of seats, returning a boolean
+
+        """
         reg_num = int(re.match("\d+",seat).group(0))
         reg_letter = re.match("\D+",seat).group(0)
         if reg_num <= 60 and reg_letter <= 'K':
@@ -62,10 +38,22 @@ class OpenWeb:
         return False            
 
     def waitPage(self):
+        """
+        Wait the page till reach a state of complete rendering
+
+        """
         wait = WebDriverWait(self.driver, 30)
         wait.until(lambda driver: driver.execute_script('return document.readyState') == 'complete')
 
-    def generateSeat(self,departure_seat,return_seat):
+    def chooseSeat(self,departure_seat,return_seat):
+        """Choose a seat according to the Letter and Number
+        
+        Keyword arguments:
+        
+        departure_seat -- seat code for departure flight
+        return_seat -- seat code for return flight
+
+        """
         assert f"Invalid seat:{departure_seat}. I couldn't book your round-trip",self.checkSeatValues(departure_seat)
         assert f"Invalid seat: {return_seat}. I couldn't book your round-trip",self.checkSeatValues(return_seat)
         
@@ -84,9 +72,15 @@ class OpenWeb:
         finally:
             self.driver.quit()
     def assertValues(self):
+        """
+        Extract the chosen seats from the page as a way of asserting
+        """
         self.go_seat = (self.driver.find_element_by_xpath('//*[@id="trigger"]/section[2]/div[1]/div/div[2]/p[1]')).text
         self.re_seat = (self.driver.find_element_by_xpath('//*[@id="trigger"]/section[2]/div[1]/div/div[2]/p[2]')).text
     def searchSeat(self,seat):
+        """
+            Find the seat through locators
+        """
         try:
             reg_num = int(re.match("\d+",seat).group(0))
             buttons = self.driver.find_elements_by_xpath(f"//div[contains(@class,'row-{reg_num}')]//button[contains(@class,'gordian-seat')]")
@@ -96,6 +90,7 @@ class OpenWeb:
             exit_accepted ='//*[@id="accept_exit_regulations"]'
             seat_select = lambda: (self.driver.find_element_by_xpath("//*[@id='desktop-seat-details']/div/h3")).text
             pattern_seat = r"\d{2}\w{1}"
+            # A warning popup shows up and this function is for accepting the condition of buying a seat in exit area, commonly near the exit door
             exit_condition = lambda:len(self.driver.find_elements_by_xpath(exit_accepted))
             found = False
             for button in buttons:
@@ -125,8 +120,10 @@ class OpenWeb:
 if __name__=="__main__":
     #seat_one,seat_two = input("Inform 2 seats for your round-trip: ex('20B 60E'): \n").split()
     obj = OpenWeb()
-    #test_1 = TestClass()
-    test_2 = TestClass()
-    #test_1.positive_test(obj)
-    test_2.multiple_test(obj,1)
-    #obj.generateSeat()
+    test_1 = TestClass()
+    #test_2 = TestClass()
+    #test_3 = TestClass()
+    test_1.positive_test(obj)
+    #test_2.multiple_test(obj,1)
+    #test_3.negative_test(obj)
+    #obj.chooseSeat('39A', '60E')
